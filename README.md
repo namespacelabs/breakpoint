@@ -9,13 +9,20 @@
 
 # Breakpoint
 
-Insert breakpoints in CI: pause workflows, SSH access to live environments, and resume executions.
+Add breakpoints to CI (e.g. GitHub Action workflows): pause workflows, access the workflow with SSH, debug and resume executions.
 
 ## What is Breakpoint
 
-Have you ever needed to pause a CI run (e.g. GitHub Actions) and SSH inside the environment to debug why it fails? Breakpoint exactly solves this problem, and it's 100% open-source.
+Have you ever wished you could have debugged an issue in CI (e.g. GitHub Actions), by SSHing to where your build or tests are running?
 
-Breakpoint pauses the execution of CI workflows and waits for SSH connections. When you are done debugging the CI environment, you can resume the workflow to continue its run. In case you need more time in the SSH session, you can extend the time the workflow remains paused.
+Breakpoint helps you create breakpoints in CI: stop the execution of the workflow, and jump in to live debug as needed with SSH (without compromising end-to-end encryption).
+
+You can make changes, re-run commands, and resume the workflow as needed. Need more time? Just run `breakpoint extend` to extend your breakpoint duration.
+
+
+And it's 100% open-source (both client and server).
+
+> ℹ️ Workflows that have active breakpoints are still "running" and continue to count towards your total CI usage.
 
 ## Using Breakpoint
 
