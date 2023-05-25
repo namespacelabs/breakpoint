@@ -1,5 +1,3 @@
-app = "breakpoint-namespace-so"
-
 [build]
 dockerfile = "Dockerfile"
 
