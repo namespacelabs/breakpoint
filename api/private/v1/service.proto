@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package namespacelabs.breakpoint.private;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "namespacelabs.dev/breakpoint/api/private/v1";
+
+service ControlService {
+  rpc Resume(google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc Extend(ExtendRequest) returns (ExtendResponse);
+}
+
+message ExtendRequest {
+  google.protobuf.Duration wait_for = 1;
+}
+
+message ExtendResponse {
+  google.protobuf.Timestamp expiration = 1;
+}

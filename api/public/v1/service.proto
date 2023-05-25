@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package namespacelabs.breakpoint;
+
+option go_package = "namespacelabs.dev/breakpoint/api/public/v1";
+
+service ProxyService {
+  // The reverse tunnel is active for as long as this stream over a quic connection is active.
+  rpc Register(RegisterRequest) returns (stream RegisterResponse);
+}
+
+message RegisterRequest {}
+
+message RegisterResponse {
+  string endpoint = 1; // Connection endpoint, e.g. <address>:<port>
+}

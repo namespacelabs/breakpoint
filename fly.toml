@@ -1,0 +1,46 @@
+app = "breakpoint-namespace-so"
+
+[build]
+dockerfile = "Dockerfile"
+
+[env]
+PROXY_LISTEN = "fly-global-services:5000"
+PROXY_PUBLIC = "breakpoint.namespace.so"
+PROXY_FRONTEND = '{"kind": "proxy_proto", "port_start": 2000, "port_end": 60000, "listen_port": 10000}'
+PROXY_VALIDATE_GITHUB_OIDC = "true"
+
+
+[[services]]
+internal_port = 5000
+protocol = "udp"
+auto_stop_machines = false
+auto_start_machines = false
+
+    [[services.ports]]
+    port = "5000"
+
+[[services]]
+internal_port = 10000
+protocol = "tcp"
+auto_stop_machines = false
+auto_start_machines = false
+
+    [[services.ports]]
+    handlers = ["proxy_proto"]
+    start_port = 2000
+    end_port = 60000
+
+[[services]]
+internal_port = 10020
+protocol = "tcp"
+auto_stop_machines = false
+auto_start_machines = false
+
+    [[services.ports]]
+    handlers = ["http"]
+    port = 80
+    force_https = true
+
+    [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
