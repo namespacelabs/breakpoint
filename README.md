@@ -56,7 +56,7 @@ there is in the breakpoint, and which address to SSH to get to the workflow.
 │                                                                           │
 │ Breakpoint running until 2023-05-24T16:06:48+02:00 (29 minutes from now). │
 │                                                                           │
-│ Connect with: ssh -p 40812 runner@breakpoint.namespace.so                 │
+│ Connect with: ssh -p 40812 runner@rendezvous.namespace.so                 │
 │                                                                           │
 └───────────────────────────────────────────────────────────────────────────┘
 ```
@@ -86,7 +86,7 @@ The config file can look like as follows:
 
 ```json
 {
-  "endpoint": "breakpoint.namespace.so:5000",
+  "endpoint": "rendezvous.namespace.so:5000",
   "shell": ["/bin/bash"],
   "allowed_ssh_users": ["example"],
   "authorized_keys": [],
@@ -102,7 +102,7 @@ The `wait` command will block the caller and print the SSH endpoint where you ca
 │                                                                           │
 │ Breakpoint running until 2023-05-24T16:06:48+02:00 (29 minutes from now). │
 │                                                                           │
-│ Connect with: ssh -p 40812 runner@breakpoint.namespace.so                 │
+│ Connect with: ssh -p 40812 runner@rendezvous.namespace.so                 │
 │                                                                           │
 └───────────────────────────────────────────────────────────────────────────┘
 ```
@@ -155,7 +155,7 @@ Namespace Labs run a public Rendezvous Server free to use. You only need to conf
 
 ```json
 {
-  "endpoint": "breakpoint.namespace.so:5000"
+  "endpoint": "rendezvous.namespace.so:5000"
 }
 ```
 
