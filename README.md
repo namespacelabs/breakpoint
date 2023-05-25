@@ -188,11 +188,11 @@ To use the shared `rendezvous`, use the following endpoint:
 
 ## Running Rendezvous yourself
 
-The server can be deployed to any cloud provider, it just needs to be accessible from your laptop and from the CI environment. See [documentation](doc/server-setup.md) to run your own instance of the Rendezvous Server.
+See our [documentation](docs/server-setup.md) on how to run your own instance of `rendezvous`.
 
 ## Roadmap
 
-Here's a list of features that we'd to tackle but haven't gotten to it yet.
+Here's a list of features that we'd to tackle but haven't gotten to yet.
 
 1. Traffic rate limiting: neither the Rendezvous Server nor the Breakpoint client restrict network traffic that is proxied. So far this hasn't been an issue because GitHub runners themselves are network capped.
 2. The Rendezvous Server does not implement a control and monitoring Web UI.
@@ -204,12 +204,12 @@ Here's a list of features that we'd to tackle but haven't gotten to it yet.
 
 ## Contributions
 
-Breakpoint needs your help! We appreciate your time and effort.
+Breakpoint welcomes your help! We appreciate your time and effort.
 
 If you find an issue in Breakpoint or you see a missing feature, please free to open an [Issue](https://github.com/namespacelabs/breakpoint/issues) on GitHub.
 
-Check out the [contributing guidelines](docs/CONTRIBUTING.md) for more details on how to develop Breakpoint.
+Check out our [contribution guidelines](docs/CONTRIBUTING.md) for more details on how to develop Breakpoint.
 
 ## Join the Community
 
-If you questions, ideas or feedback, you are welcome to join our [Discord server](https://community.namespace.so/discord).
+If you have questions, ideas or feedback, chat with the team on our [Discord server](https://community.namespace.so/discord).
