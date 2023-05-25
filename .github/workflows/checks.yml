@@ -3,6 +3,9 @@ on:
   pull_request:
     branches:
       - "*"
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -22,6 +25,6 @@ jobs:
       - name: Check Go mod is tidy
         run: go mod tidy && git diff --exit-code
 
-      - name: Build Breakpoint commands
+      - name: Check that Go builds
         run: |
           go build -o . ./cmd/...
