@@ -141,40 +141,45 @@ func (m *Manager) SetEndpoint(addr string) {
 	m.mu.Unlock()
 	m.updated <- struct{}{}
 
-	host, port, _ := net.SplitHostPort(addr)
+	expandf := expand(addr, m.Expiration())
 
-	exp := m.Expiration()
 	for _, wh := range m.opts.Webhooks {
 		ctx, done := context.WithTimeout(m.ctx, 30*time.Second)
 		defer done()
 
-		payload := execTemplate(wh.Payload, func(key string) string {
-			switch key {
-			case "BREAKPOINT_ENDPOINT":
-				return addr
-
-			case "BREAKPOINT_HOST":
-				return host
-
-			case "BREAKPOINT_PORT":
-				return port
-
-			case "BREAKPOINT_TIME_LEFT":
-				return strings.TrimSpace(humanize.RelTime(exp, time.Now(), "", ""))
-
-			case "BREAKPOINT_EXPIRATION":
-				return exp.Format(Stamp)
-			}
-
-			return os.Getenv(key)
-		})
+		payload := execTemplate(wh.Payload, expandf)
 
 		t := time.Now()
-		if err := webhook.Notify(ctx, wh.URL, payload); err != nil {
+		if err := webhook.Notify(ctx, os.Expand(wh.URL, expandf), payload); err != nil {
 			m.logger.Err(err).Msg("Failed to notify Webhook")
 		} else {
 			m.logger.Info().Dur("took", time.Since(t)).Str("url", wh.URL).Msg("Notified webhook")
 		}
+	}
+}
+
+func expand(addr string, exp time.Time) func(key string) string {
+	host, port, _ := net.SplitHostPort(addr)
+
+	return func(key string) string {
+		switch key {
+		case "BREAKPOINT_ENDPOINT":
+			return addr
+
+		case "BREAKPOINT_HOST":
+			return host
+
+		case "BREAKPOINT_PORT":
+			return port
+
+		case "BREAKPOINT_TIME_LEFT":
+			return strings.TrimSpace(humanize.RelTime(exp, time.Now(), "", ""))
+
+		case "BREAKPOINT_EXPIRATION":
+			return exp.Format(Stamp)
+		}
+
+		return os.Getenv(key)
 	}
 }
 
