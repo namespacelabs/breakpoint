@@ -1,0 +1,53 @@
+{
+  "url": "${SLACK_WEBHOOK_URL}",
+  "payload": {
+    "blocks": [
+      {
+        "type": "header",
+        "text": {
+          "type": "plain_text",
+          "text": "Workflow breakpoint started",
+          "emoji": true
+        }
+      },
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": "*Repository:* <https://github.com/${GITHUB_REPOSITORY}/tree/${GITHUB_REF_NAME}|${GITHUB_REPOSITORY}> (${GITHUB_REF_NAME})"
+        }
+      },
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": "*Workflow:* ${GITHUB_WORKFLOW} (<https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}|Run #${GITHUB_RUN_NUMBER}>)"
+        }
+      },
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": "*SSH:* `ssh -p ${BREAKPOINT_PORT} runner@${BREAKPOINT_HOST}`"
+        }
+      },
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": "*Expires:* in ${BREAKPOINT_TIME_LEFT} (${BREAKPOINT_EXPIRATION})"
+        }
+      },
+      {
+        "type": "context",
+        "elements": [
+          {
+            "type": "plain_text",
+            "text": "Actor: ${GITHUB_ACTOR}",
+            "emoji": true
+          }
+        ]
+      }
+    ]
+  }
+}
