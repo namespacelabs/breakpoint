@@ -1,11 +1,11 @@
 <img src="https://raw.githubusercontent.com/namespacelabs/breakpoint/main/docs/imgs/breakpoint-banner.png" alt="Breakpoint. Debug with SSH. Resume." width="400" height="200">
 
-[![](https://dcbadge.vercel.app/api/server/DqMzDFR6Hc?style=flat-square&compact=true)](https://discord.gg/DqMzDFR6Hc)
+[![Discord](https://img.shields.io/badge/Join-Namespace-blue?color=blue&label=Discord&logo=discord&logoColor=3eb0ff&style=flat-square)](https://discord.gg/DqMzDFR6Hc)
 [![Twitter Follow](https://img.shields.io/badge/Follow-Namespace_Labs-blue?logo=twitter&style=flat-square)](https://twitter.com/intent/follow?screen_name=namespacelabs)
 [![GitHub Actions](https://img.shields.io/badge/GitHub-Action-blue?logo=githubactions&style=flat-square)](https://github.com/namespacelabs/breakpoint-action)
+![GitHub](https://img.shields.io/github/license/namespacelabs/breakpoint?color=blue&label=License&style=flat-square)
 ![Build](https://img.shields.io/github/actions/workflow/status/namespacelabs/breakpoint/build.yml?label=Build&style=flat-square)
 ![Checks](https://img.shields.io/github/actions/workflow/status/namespacelabs/breakpoint/checks.yml?label=Checks&style=flat-square)
-![GitHub](https://img.shields.io/github/license/namespacelabs/breakpoint?label=License&style=flat-square)
 
 # Breakpoint
 
