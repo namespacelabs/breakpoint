@@ -183,28 +183,6 @@ func expand(addr string, exp time.Time) func(key string) string {
 	}
 }
 
-func execTemplate(input map[string]any, mapping func(string) string) map[string]any {
-	if input == nil {
-		return nil
-	}
-
-	out := map[string]any{}
-	for key, value := range input {
-		switch x := value.(type) {
-		case map[string]any:
-			out[key] = execTemplate(x, mapping)
-
-		case string:
-			out[key] = os.Expand(x, mapping)
-
-		default:
-			out[key] = value
-		}
-	}
-
-	return out
-}
-
 func (m *Manager) announce() {
 	m.mu.Lock()
 	host, port, _ := net.SplitHostPort(m.endpoint)
