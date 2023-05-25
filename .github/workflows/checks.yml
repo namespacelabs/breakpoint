@@ -1,0 +1,27 @@
+name: Pull Request Checks
+on:
+  pull_request:
+    branches:
+      - "*"
+  workflow_dispatch:
+
+permissions:
+  contents: read # Checkout the code
+
+jobs:
+  docker-build:
+    name: Build with Docker
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Check Go formatting
+        run: go fmt ./... && git diff --exit-code
+
+      - name: Check Go mod is tidy
+        run: go mod tidy && git diff --exit-code
+
+      - name: Build Breakpoint commands
+        run: |
+          go build -o . ./cmd/...

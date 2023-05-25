@@ -1,0 +1,43 @@
+name: Build
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read # Checkout the code
+  packages: write # Push to GitHub registry
+
+env:
+  IMAGE_NAME: rendezvous
+  IMAGE_REPO: ghcr.io/${{ github.repository_owner }}
+  VERSION: ${{ github.sha }}
+
+jobs:
+  docker-build:
+    name: Build with Docker
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Check Go formatting
+        run: go fmt ./... && git diff --exit-code
+
+      - name: Check Go mod is tidy
+        run: go mod tidy && git diff --exit-code
+
+      - name: Build Breakpoint commands
+        run: |
+          go build -o . ./cmd/...
+
+      - name: Setup Buildx for Docker build
+        uses: docker/setup-buildx-action@v2
+
+      - name: Docker build the Rendezvous server
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE_REPO }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
