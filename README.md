@@ -69,7 +69,7 @@ by 30 more minutes (or extend by more with the `--for` flag).
 When you are done, you can end the breakpoint session with `breakpoint resume`.
 
 By default, the Breakpoint Action uses a shared `rendezvous` server provided by
-Namespace Labs for free. Even though a shared server is used, your SSH traffic is always encrypted end-to-end (see Architecture).
+Namespace Labs for free. Even though a shared server is used, your SSH traffic is always _encrypted end-to-end_ (see Architecture).
 
 Check out the [Breakpoint Action](https://github.com/namespacelabs/breakpoint-action) for more details on
 what arguments you can set.
@@ -87,11 +87,11 @@ The config file can look like as follows:
 ```json
 {
   "endpoint": "breakpoint.namespace.so:5000",
-  "login_shell": ["/bin/bash"],
+  "shell": ["/bin/bash"],
   "allowed_ssh_users": ["example"],
   "authorized_keys": [],
-  "github_usernames": ["<your-github-username>"],
-  "initial_duration": "30m"
+  "authorized_github_users": ["<your-github-username>"],
+  "duration": "30m"
 }
 ```
 
@@ -139,7 +139,7 @@ For example, the following `config.json` allows access to "jack123" and "alice32
 ```json
 {
   "allowed_ssh_users": ["runner"],
-  "github_usernames": ["jack123", "alice321"]
+  "authorized_github_users": ["jack123", "alice321"]
 }
 ```
 
