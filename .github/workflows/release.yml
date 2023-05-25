@@ -1,0 +1,39 @@
+name: Release Rendezvous Docker image
+
+on:
+  release:
+    types: [released]
+
+permissions:
+  contents: read # Checkout the code
+  packages: write # Push to GitHub registry
+
+env:
+  IMAGE_NAME: rendezvous
+  IMAGE_REPO: ghcr.io/${{ github.repository_owner }}
+  VERSION: ${{ github.event.release.tag_name }}
+
+jobs:
+  docker-release:
+    name: Release Docker image ${{ github.event.release.tag_name }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Buildx for Docker build
+        uses: docker/setup-buildx-action@v2
+
+      - name: Docker build the Rendezvous server
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE_REPO }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}

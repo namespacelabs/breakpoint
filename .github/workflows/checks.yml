@@ -1,4 +1,4 @@
-name: Pull Request Checks
+name: Commit Checks
 on:
   pull_request:
     branches:
@@ -12,7 +12,7 @@ permissions:
   contents: read # Checkout the code
 
 jobs:
-  docker-build:
+  checks:
     name: Build with Docker
     runs-on: ubuntu-22.04
     steps:
