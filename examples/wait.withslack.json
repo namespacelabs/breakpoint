@@ -16,14 +16,14 @@
             "type": "section",
             "text": {
               "type": "mrkdwn",
-              "text": "*Repository:* <https://${GITHUB_REPOSITORY}/tree/${GITHUB_REF_NAME}|${GITHUB_REPOSITORY}> (${GITHUB_REF_NAME})"
+              "text": "*Repository:* <https://github.com/${GITHUB_REPOSITORY}/tree/${GITHUB_REF_NAME}|${GITHUB_REPOSITORY}> (${GITHUB_REF_NAME})"
             }
           },
           {
             "type": "section",
             "text": {
               "type": "mrkdwn",
-              "text": "*Workflow:* ${GITHUB_WORKFLOW} (<https://${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}|Run #${GITHUB_RUN_NUMBER}>)"
+              "text": "*Workflow:* ${GITHUB_WORKFLOW} (<https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}|Run #${GITHUB_RUN_NUMBER}>)"
             }
           },
           {
