@@ -5,7 +5,7 @@ dockerfile = "Dockerfile"
 
 [env]
 PROXY_LISTEN = "fly-global-services:5000"
-PROXY_PUBLIC = "breakpoint.namespace.so"
+PROXY_PUBLIC = "rendezvous.namespace.so"
 PROXY_FRONTEND = '{"kind": "proxy_proto", "port_start": 2000, "port_end": 60000, "listen_port": 10000}'
 PROXY_VALIDATE_GITHUB_OIDC = "true"
 
