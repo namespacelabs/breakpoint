@@ -15,11 +15,11 @@ Have you ever needed to pause a CI run (e.g. GitHub Actions) and SSH inside the 
 
 Breakpoint pauses the execution of CI workflows and waits for SSH connections. When you are done debugging the CI environment, you can resume the workflow to continue its run. In case you need more time in the SSH session, you can extend the time the workflow remains paused.
 
-## Use Breakpoint
+## Using Breakpoint
 
-Breakpoint loves GitHub Actions. You add Breakpoints to your GitHub Actions CI with the [Breakpoint Action](https://github.com/namespacelabs/breakpoint-action).
+Breakpoint loves GitHub Actions. You can use the [Breakpoint Action](https://github.com/namespacelabs/breakpoint-action) to add a breakpoint to a GitHub workflow; but most importantly, you can add breakpoints that only trigger when there's a failure in the workflow.
 
-The example below triggers the Breakpoint only if the previous step (i.e. `go test`) failed. When that happens, the Breakpoint pauses the workflow for 30 minutes and allows SSH from GitHub users "jack123" and "alice321".
+The example below triggers the Breakpoint only if the previous step (i.e. `go test`) failed. When that happens, Breakpoint pauses the workflow for 30 minutes and allows SSH from GitHub users "jack123" and "alice321".
 
 ```yaml
 jobs:
@@ -46,7 +46,8 @@ jobs:
           authorized-users: jack123, alice321
 ```
 
-When the Breakpoint activates, you will see the following output in the GitHub Action logs. It tells you where you can connect SSH to:
+When Breakpoint activates, it will output on a regular basis how much time left
+there is in the breakpoint, and which address to SSH to get to the workflow.
 
 ```bash
 ┌───────────────────────────────────────────────────────────────────────────┐
@@ -58,9 +59,18 @@ When the Breakpoint activates, you will see the following output in the GitHub A
 └───────────────────────────────────────────────────────────────────────────┘
 ```
 
-You can now SSH inside the target system and explore the live environment. If you need more time, you can run `breakpoint extend` to get 30 more minutes of SSH session (for custom value see `--for` flag). When you are done, you can end the breakpoint session with `breakpoint resume`.
+You can now SSH the runner, re-run builds or tests, and even do changes.
 
-By default, the Breakpoint Action uses the `rendezvous` server hosted by Namespace Labs. See the [Breakpoint Action](https://github.com/namespacelabs/breakpoint-action) for more details on the arguments.
+If you need more time, run `breakpoint extend` to extend the breakpoint duration
+by 30 more minutes (or extend by more with the `--for` flag).
+
+When you are done, you can end the breakpoint session with `breakpoint resume`.
+
+By default, the Breakpoint Action uses a shared `rendezvous` server provided by
+Namespace Labs for free. Even though a shared server is used, your SSH traffic is always encrypted end-to-end (see Architecture).
+
+Check out the [Breakpoint Action](https://github.com/namespacelabs/breakpoint-action) for more details on
+what arguments you can set.
 
 ### Use Breakpoint CLI
 
