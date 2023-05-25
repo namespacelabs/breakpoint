@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/namespacelabs/breakpoint/main/docs/imgs/breakpoint-banner.png" alt="Breakpoint. Debug with SSH. Resume.">
+<img src="https://raw.githubusercontent.com/namespacelabs/breakpoint/main/docs/imgs/breakpoint-banner.png" alt="Breakpoint. Debug with SSH. Resume." width="400" height="200">
 
 
 [![](https://dcbadge.vercel.app/api/server/DqMzDFR6Hc?style=flat-square&compact=true)](https://discord.gg/DqMzDFR6Hc)
