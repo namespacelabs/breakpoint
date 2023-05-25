@@ -1,6 +1,6 @@
 [![](https://dcbadge.vercel.app/api/server/DqMzDFR6Hc?style=flat-square&compact=true)](https://discord.gg/DqMzDFR6Hc)
 [![Twitter Follow](https://img.shields.io/badge/Follow-Namespace_Labs-blue?logo=twitter&style=flat-square)](https://twitter.com/intent/follow?screen_name=namespacelabs)
-[![GitHub Actions](https://img.shields.io/badge/GitHub-Action-blue?logo=githubactions&style=flat-square)](https://twitter.com/intent/follow?screen_name=namespacelabs)
+[![GitHub Actions](https://img.shields.io/badge/GitHub-Action-blue?logo=githubactions&style=flat-square)](https://github.com/namespacelabs/breakpoint-action)
 
 # Breakpoint
 
