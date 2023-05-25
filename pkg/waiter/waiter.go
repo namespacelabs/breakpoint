@@ -13,13 +13,14 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/muesli/reflow/wordwrap"
 	"github.com/rs/zerolog"
-	"golang.org/x/exp/slices"
 	v1 "namespacelabs.dev/breakpoint/api/private/v1"
 	"namespacelabs.dev/breakpoint/pkg/webhook"
 )
 
 const (
 	logTickInterval = 1 * time.Minute
+
+	Stamp = time.Stamp + " MST"
 )
 
 type ManagerOpts struct {
@@ -134,28 +135,38 @@ func (m *Manager) Expiration() time.Time {
 	return m.expiration
 }
 
-var safeEnv = []string{"GITHUB_REPOSITORY"}
-
 func (m *Manager) SetEndpoint(addr string) {
 	m.mu.Lock()
 	m.endpoint = addr
 	m.mu.Unlock()
 	m.updated <- struct{}{}
 
+	host, port, _ := net.SplitHostPort(addr)
+
+	exp := m.Expiration()
 	for _, wh := range m.opts.Webhooks {
 		ctx, done := context.WithTimeout(m.ctx, 30*time.Second)
 		defer done()
 
 		payload := execTemplate(wh.Payload, func(key string) string {
-			if key == "BREAKPOINT_ENDPOINT" {
+			switch key {
+			case "BREAKPOINT_ENDPOINT":
 				return addr
+
+			case "BREAKPOINT_HOST":
+				return host
+
+			case "BREAKPOINT_PORT":
+				return port
+
+			case "BREAKPOINT_TIME_LEFT":
+				return strings.TrimSpace(humanize.RelTime(exp, time.Now(), "", ""))
+
+			case "BREAKPOINT_EXPIRATION":
+				return exp.Format(Stamp)
 			}
 
-			if slices.Contains(safeEnv, key) {
-				return os.Getenv(key)
-			}
-
-			return ""
+			return os.Getenv(key)
 		})
 
 		t := time.Now()
@@ -201,7 +212,7 @@ func (m *Manager) announce() {
 
 	ww := wordwrap.NewWriter(80)
 	fmt.Fprintln(ww)
-	fmt.Fprintf(ww, "Breakpoint running until %v (%v).\n", deadline.Format(time.RFC3339), humanize.Time(deadline))
+	fmt.Fprintf(ww, "Breakpoint running until %v (%v).\n", deadline.Format(Stamp), humanize.Time(deadline))
 	fmt.Fprintln(ww)
 	fmt.Fprintf(ww, "Connect with: ssh -p %s runner@%s\n", port, host)
 	_ = ww.Close()

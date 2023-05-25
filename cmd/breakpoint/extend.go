@@ -8,6 +8,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 	pb "namespacelabs.dev/breakpoint/api/private/v1"
 	"namespacelabs.dev/breakpoint/pkg/bcontrol"
+	"namespacelabs.dev/breakpoint/pkg/waiter"
 
 	"github.com/dustin/go-humanize"
 )
@@ -37,7 +38,7 @@ func newExtendCmd() *cobra.Command {
 
 		expiration := resp.Expiration.AsTime()
 		fmt.Printf("Breakpoint now expires at %s (%s)\n",
-			expiration.Format(time.RFC3339),
+			expiration.Format(waiter.Stamp),
 			humanize.Time(expiration))
 
 		return nil
