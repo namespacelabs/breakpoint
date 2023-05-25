@@ -88,7 +88,7 @@ The config file can look like as follows:
 {
   "endpoint": "rendezvous.namespace.so:5000",
   "shell": ["/bin/bash"],
-  "allowed_ssh_users": ["example"],
+  "allowed_ssh_users": ["runner"],
   "authorized_keys": [],
   "authorized_github_users": ["<your-github-username>"],
   "duration": "30m"
