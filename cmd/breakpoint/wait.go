@@ -50,10 +50,16 @@ func newWaitCmd() *cobra.Command {
 			return err
 		}
 
-		mgr, ctx := waiter.NewManager(ctx, waiter.ManagerOpts{
+		mopts := waiter.ManagerOpts{
 			InitialDur: cfg.ParsedDuration,
 			Webhooks:   cfg.Webhooks,
-		})
+		}
+
+		if cfg.SlackBot != nil {
+			mopts.SlackBots = append(mopts.SlackBots, *cfg.SlackBot)
+		}
+
+		mgr, ctx := waiter.NewManager(ctx, mopts)
 
 		sshd, err := sshd.MakeServer(ctx, sshd.SSHServerOpts{
 			Shell:          cfg.Shell,

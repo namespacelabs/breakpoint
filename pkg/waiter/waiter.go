@@ -3,6 +3,7 @@ package waiter
 import (
 	"context"
 	"fmt"
+	"io"
 	"math"
 	"net"
 	"os"
@@ -26,7 +27,8 @@ const (
 type ManagerOpts struct {
 	InitialDur time.Duration
 
-	Webhooks []v1.Webhook
+	Webhooks  []v1.Webhook
+	SlackBots []v1.SlackBot
 }
 
 type Manager struct {
@@ -39,6 +41,7 @@ type Manager struct {
 	updated    chan struct{}
 	expiration time.Time
 	endpoint   string
+	resources  []io.Closer
 }
 
 func NewManager(ctx context.Context, opts ManagerOpts) (*Manager, context.Context) {
@@ -55,6 +58,19 @@ func NewManager(ctx context.Context, opts ManagerOpts) (*Manager, context.Contex
 	go func() {
 		defer cancel()
 		m.loop(ctx)
+
+		m.mu.Lock()
+		resources := m.resources
+		m.resources = nil
+		m.mu.Unlock()
+
+		// Resources should clean up quickly as they hold up the cancelation of the context.
+		// We're guaranteed to wait for these because the incoming `ctx` is never cancelled.
+		for _, closer := range resources {
+			if err := closer.Close(); err != nil {
+				l.Err(err).Msg("Failed while cleaning up resource")
+			}
+		}
 	}()
 
 	return m, ctx
@@ -135,10 +151,28 @@ func (m *Manager) Expiration() time.Time {
 	return m.expiration
 }
 
+func (m *Manager) Endpoint() string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.endpoint
+}
+
 func (m *Manager) SetEndpoint(addr string) {
 	m.mu.Lock()
 	m.endpoint = addr
 	m.mu.Unlock()
+
+	var resources []io.Closer
+	for _, bot := range m.opts.SlackBots {
+		if bot := startBot(m.ctx, m, bot); bot != nil {
+			resources = append(resources, bot)
+		}
+	}
+
+	m.mu.Lock()
+	m.resources = resources
+	m.mu.Unlock()
+
 	m.updated <- struct{}{}
 
 	expandf := expand(addr, m.Expiration())

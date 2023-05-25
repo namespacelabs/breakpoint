@@ -16,6 +16,7 @@ require (
 	github.com/pkg/sftp v1.13.5
 	github.com/quic-go/quic-go v0.34.0
 	github.com/rs/zerolog v1.29.1
+	github.com/slack-go/slack v0.12.2
 	github.com/spf13/cobra v1.7.0
 	go.uber.org/atomic v1.7.0
 	golang.org/x/crypto v0.4.0
@@ -34,6 +35,7 @@ require (
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
+	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
