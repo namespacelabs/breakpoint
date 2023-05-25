@@ -74,9 +74,9 @@ Namespace Labs for free. Even though a shared server is used, your SSH traffic i
 Check out the [Breakpoint Action](https://github.com/namespacelabs/breakpoint-action) for more details on
 what arguments you can set.
 
-### Use Breakpoint CLI
+### Using the Breakpoint CLI to create a breakpoint
 
-To activate the breakpoint, you can run:
+To activate a breakpoint, you can run:
 
 ```bash
 $ breakpoint wait --config config.json
@@ -95,7 +95,7 @@ The config file can look like as follows:
 }
 ```
 
-The `wait` command will block the caller and print the SSH endpoint where you can connect to:
+The `wait` command will block the caller and print an SSH endpoint that you can connect to:
 
 ```bash
 ┌───────────────────────────────────────────────────────────────────────────┐
@@ -107,34 +107,55 @@ The `wait` command will block the caller and print the SSH endpoint where you ca
 └───────────────────────────────────────────────────────────────────────────┘
 ```
 
-Once you are logged into the SSH session, you can use breakpoint CLI to extend or close the Breakpoint session:
+Once you are logged into the SSH session, you can use breakpoint CLI to extend the breakpoint duration, or resume the workflow (i.e. exit the `wait`):
 
-- `breakpoint extend --for 30m`: extend the wait period for 30m more minutes
+- `breakpoint extend --for 60m`: extend the wait period for 30m more minutes
 - `breakpoint resume`: stops Breakpoint process and release the control flow to the caller of the `wait` command
 
-## Architecture at 20,000 feet
+## Architecture
 
-Breakpoint consists of two main components: `rendezvous` server and `breakpoint` CLI.
+Breakpoint consists of two main components: `rendezvous` (where public connections are terminated) and `breakpoint`.
 
-The CLI pauses the execution of CI workflows and opens a QUIC connection to the server, signaling the intent to open a new breakpoint session. The server, in turn, exposes an SSH socket with a public port it randomly assigns for the breakpoint session.
+When a breakpoint is created, the CLI blocks until an expiration time has passed.
+
+Meanwhile, it establishes a QUIC connection to `rendezvous`, which allocates a
+public endpoint (with a random port) that will be reverse proxied back to the
+running `breakpoint`; each connection then serves a SSH session (from a ssh
+service embedded in `breakpoint`). SSH sessions do not start new user sessions,
+and always run commands using the same uid as the parent `breakpoint wait` as
+well.
+
+The first QUIC stream `breakpoint -> rendezvous` is used for gRPC; `rendezvous`
+expects a `Register` stream in order to allocate an endpoint, and will serve
+that endpoint while the corresponding gRPC stream is active.
+
+Because the SSH session is established end-to-end, `rendezvous` is not capable of performing a man-in-the-middle attack.
 
 ![architecture](docs/imgs/Breakpoint%20high-level%20view.png)
 
-The CLI implements pausing by blocking the caller process. The command `breakpoint wait` blocks until either the user runs `breakpoint resume` or the wait-timer expires. The communication between the `wait` process and the CLI is implemented with gRPC.
+The CLI implements pausing by blocking the caller process. The command
+`breakpoint wait` blocks until either the user runs `breakpoint resume` or the
+wait-timer expires. The communication between the `wait` process and the CLI is
+implemented with gRPC.
 
-The `wait` command also runs `sshd` service, which terminates SSH connections and opens the shell sessions.
+On receive a connection, `rendezvous` establishes a new QUIC stream over the
+same connection that was registered previously, in the direction `rendezvous -> breakpoint` and performs dumb TCP proxying over it, without the need of additional framing.
 
-The Rendezvous Server proxies the TCP connections through the QUIC connections the `breakpoint` CLI established earlier. This means the SSH connection remains end-to-end encrypted between the SSH client and the target CI environment.
+The lack of additional framing in addition to QUIC's streams having independent
+control flow (i.e. no shared head of the line blocking), make QUIC a perfect
+solution for this type of reverse proxying (in fact, cloudflare uses similar
+techniques in Cloudflare Tunnel).
+
 
 ## Authentication
 
-The SSH service accepts only the users or SSH keys listed in the `config.json` file when the `breakpoint wait` was called.
+The SSH service in `breakpoint` only accepts sessions from pre-referenced keys or public SSH keys configured by GitHub users. These are specified in the configuration file when the breakpoint is created (or as arguments to the GitHub action).
 
-You can specify GitHub usernames in the `github_usernames` config field. Breakpoint automatically fetches the SSH public keys from GitHub for these users. You can also specify the SSH keys directly with the `authorized_keys` field.
+You can specify GitHub usernames in the `github_usernames` config field. Breakpoint automatically fetches the SSH public keys from GitHub for these users. You can also specify the SSH keys directly via the `authorized_keys` field.
 
-The set of allowed users can be listed in the `allowed_ssh_users` field.
+The SSH service always spawns processes with the same uid as `breakpoint wait`, and by default accepts any requested username. This can be limited by setting the `allowed_ssh_users` configuration field.
 
-For example, the following `config.json` allows access to "jack123" and "alice321" GitHub users with SSH user called "runner".
+For example, the following `config.json` allows access to "jack123" and "alice321" GitHub users with a SSH user called "runner".
 
 ```json
 {
@@ -143,15 +164,21 @@ For example, the following `config.json` allows access to "jack123" and "alice32
 }
 ```
 
-### GitHub OIDC
+### GitHub-based authentication (via OIDC)
 
-The Breakpoint client can optionally share the GitHub's OIDC token with the Rendezvous Server. The server uses the token to verify the GitHub Action's details - such as the organization, repository name and owner username - and enforce ACLs.
+`breakpoint` is able to request a fresh GitHub-emitted workflow identifying token, that it sends to `rendezvous`.
 
-This helps with protecting the Rendezvous Server from being used by unexpected users.
+`rendezvous` has the ability to verify these, and performs access control based on the repository where the invocation was originated.
 
-## Use Namespace Rendezvous Server
+Even if no access control is enforced, repository information is logged by `rendezvous` if available.
 
-Namespace Labs run a public Rendezvous Server free to use. You only need to configure the endpoint in the `config.json` file.
+## Using Namespace's shared Rendezvous
+
+Namespace Labs runs a public `rendezvous` server that is open to everyone. But you can also run your own (see below).
+
+Although `rendezvous` facilitates pushing bytes to workloads running in workers (which would otherwise not be able to offer services), the bytes it proxies are not cleartext. Breakpoint establishes end-to-end ssh sessions.
+
+To use the shared `rendezvous`, use the following endpoint:
 
 ```json
 {
@@ -159,7 +186,7 @@ Namespace Labs run a public Rendezvous Server free to use. You only need to conf
 }
 ```
 
-## Run the Rendezvous Server
+## Running Rendezvous yourself
 
 The server can be deployed to any cloud provider, it just needs to be accessible from your laptop and from the CI environment. See [documentation](doc/server-setup.md) to run your own instance of the Rendezvous Server.
 
