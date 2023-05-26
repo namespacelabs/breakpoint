@@ -19,7 +19,6 @@ Breakpoint helps you create breakpoints in CI: stop the execution of the workflo
 
 You can make changes, re-run commands, and resume the workflow as needed. Need more time? Just run `breakpoint extend` to extend your breakpoint duration.
 
-
 And it's 100% open-source (both client and server).
 
 > ℹ️ Workflows that have active breakpoints are still "running" and continue to count towards your total CI usage.
@@ -153,7 +152,6 @@ control flow (i.e. no shared head of the line blocking), make QUIC a perfect
 solution for this type of reverse proxying (in fact, cloudflare uses similar
 techniques in Cloudflare Tunnel).
 
-
 ## Authentication
 
 The SSH service in `breakpoint` only accepts sessions from pre-referenced keys or public SSH keys configured by GitHub users. These are specified in the configuration file when the breakpoint is created (or as arguments to the GitHub action).
@@ -213,7 +211,7 @@ Here's a list of features that we'd to tackle but haven't gotten to yet.
 
 Breakpoint welcomes your help! We appreciate your time and effort.
 
-If you find an issue in Breakpoint or you see a missing feature, please free to open an [Issue](https://github.com/namespacelabs/breakpoint/issues) on GitHub.
+If you find an issue in Breakpoint or you see a missing feature, feel free to open an [Issue](https://github.com/namespacelabs/breakpoint/issues) on GitHub.
 
 Check out our [contribution guidelines](docs/CONTRIBUTING.md) for more details on how to develop Breakpoint.
 
