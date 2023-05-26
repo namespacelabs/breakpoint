@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -20,6 +19,7 @@ import (
 	"namespacelabs.dev/breakpoint/pkg/github"
 	"namespacelabs.dev/breakpoint/pkg/githuboidc"
 	"namespacelabs.dev/breakpoint/pkg/internalserver"
+	"namespacelabs.dev/breakpoint/pkg/jsonfile"
 	"namespacelabs.dev/breakpoint/pkg/passthrough"
 	"namespacelabs.dev/breakpoint/pkg/quicproxyclient"
 	"namespacelabs.dev/breakpoint/pkg/sshd"
@@ -122,7 +122,7 @@ func newWaitCmd() *cobra.Command {
 
 func loadConfig(ctx context.Context, file string) (ParsedConfig, error) {
 	var cfg ParsedConfig
-	if err := loadJSON(file, &cfg.WaitConfig); err != nil {
+	if err := jsonfile.Load(file, &cfg.WaitConfig); err != nil {
 		return cfg, err
 	}
 
@@ -204,15 +204,6 @@ func cancelIsOK(err error) error {
 	}
 
 	return err
-}
-
-func loadJSON(filename string, target any) error {
-	f, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-
-	return json.NewDecoder(f).Decode(target)
 }
 
 type dummyAddr struct{}

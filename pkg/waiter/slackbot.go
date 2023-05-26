@@ -8,15 +8,17 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
+	"github.com/google/go-github/v52/github"
 	"github.com/rs/zerolog"
 	"github.com/slack-go/slack"
 	v1 "namespacelabs.dev/breakpoint/api/private/v1"
+	"namespacelabs.dev/breakpoint/pkg/jsonfile"
 )
 
 type botInstance struct {
-	client *slack.Client
-	m      *Manager
-	stable renderGitHubArgs
+	client      *slack.Client
+	m           *Manager
+	githubProps renderGitHubProps
 
 	channelID string
 	ts        string
@@ -24,9 +26,9 @@ type botInstance struct {
 
 func startBot(ctx context.Context, m *Manager, conf v1.SlackBot) *botInstance {
 	bot := &botInstance{
-		client: slack.New(os.ExpandEnv(conf.Token)),
-		m:      m,
-		stable: prepareGitHubArgs(),
+		client:      slack.New(os.ExpandEnv(conf.Token)),
+		m:           m,
+		githubProps: prepareGitHubProps(ctx),
 	}
 
 	chid, ts, err := bot.client.PostMessageContext(ctx, os.ExpandEnv(conf.Channel), bot.makeBlocks(false))
@@ -52,10 +54,10 @@ func (b *botInstance) Close() error {
 
 func (b *botInstance) makeBlocks(leaving bool) slack.MsgOption {
 	if leaving {
-		return slack.MsgOptionBlocks(renderGitHubMessage(b.stable, "", time.Time{})...)
+		return slack.MsgOptionBlocks(renderGitHubMessage(b.githubProps, "", time.Time{})...)
 	}
 
-	return slack.MsgOptionBlocks(renderGitHubMessage(b.stable, b.m.Endpoint(), b.m.Expiration())...)
+	return slack.MsgOptionBlocks(renderGitHubMessage(b.githubProps, b.m.Endpoint(), b.m.Expiration())...)
 }
 
 func (b *botInstance) sendUpdate(ctx context.Context, leaving bool) error {
@@ -80,17 +82,18 @@ func (b *botInstance) loop(ctx context.Context) error {
 	}
 }
 
-type renderGitHubArgs struct {
+type renderGitHubProps struct {
 	Repository string
 	RefName    string
 	Workflow   string
 	RunID      string
 	RunNumber  string
 	Actor      string
+	PushEvent  *github.PushEvent // Only set on push events.
 }
 
-func prepareGitHubArgs() renderGitHubArgs {
-	return renderGitHubArgs{
+func prepareGitHubProps(ctx context.Context) renderGitHubProps {
+	props := renderGitHubProps{
 		Repository: os.Getenv("GITHUB_REPOSITORY"),
 		RefName:    os.Getenv("GITHUB_REF_NAME"),
 		Workflow:   os.Getenv("GITHUB_WORKFLOW"),
@@ -98,21 +101,41 @@ func prepareGitHubArgs() renderGitHubArgs {
 		RunNumber:  os.Getenv("GITHUB_RUN_NUMBER"),
 		Actor:      os.Getenv("GITHUB_ACTOR"),
 	}
+
+	if eventFile := os.Getenv("GITHUB_EVENT_PAH"); os.Getenv("GITHUB_EVENT_NAME") == "push" && eventFile != "" {
+		var pushEvent github.PushEvent
+		if err := jsonfile.Load(eventFile, &pushEvent); err != nil {
+			zerolog.Ctx(ctx).Warn().Err(err).Msg("Failed to load event file")
+		} else {
+			props.PushEvent = &pushEvent
+		}
+	}
+
+	return props
 }
 
-func renderGitHubMessage(args renderGitHubArgs, endpoint string, exp time.Time) []slack.Block {
+func renderGitHubMessage(props renderGitHubProps, endpoint string, exp time.Time) []slack.Block {
 	blocks := []slack.Block{
 		slack.NewHeaderBlock(slack.NewTextBlockObject(slack.PlainTextType, "Workflow failed", false, false)),
 		slack.NewSectionBlock(slack.NewTextBlockObject(
 			slack.MarkdownType,
-			fmt.Sprintf("*Repository:* <https://github.com/%s/tree/%s|github.com/%s> (%s)", args.Repository, args.RefName, args.Repository, args.RefName),
+			fmt.Sprintf("*Repository:* <https://github.com/%s/tree/%s|github.com/%s> (%s)", props.Repository, props.RefName, props.Repository, props.RefName),
 			false, false,
 		), nil, nil),
 		slack.NewSectionBlock(slack.NewTextBlockObject(
 			slack.MarkdownType,
-			fmt.Sprintf("*Workflow:* %s (<https://github.com/%s/actions/runs/%s|Run #%s>)", args.Workflow, args.Repository, args.RunID, args.RunNumber),
+			fmt.Sprintf("*Workflow:* %s (<https://github.com/%s/actions/runs/%s|Run #%s>)", props.Workflow, props.Repository, props.RunID, props.RunNumber),
 			false, false,
 		), nil, nil),
+	}
+
+	if props.PushEvent != nil && props.PushEvent.HeadCommit != nil && props.PushEvent.HeadCommit.Message != nil {
+		blocks = append(blocks,
+			slack.NewSectionBlock(slack.NewTextBlockObject(
+				slack.MarkdownType,
+				fmt.Sprintf("*<%s|Commit>:* %s`", maybeCommitURL(props.Repository, *props.PushEvent), *props.PushEvent.HeadCommit.Message),
+				false, false,
+			), nil, nil))
 	}
 
 	if endpoint != "" && !exp.IsZero() {
@@ -133,7 +156,19 @@ func renderGitHubMessage(args renderGitHubArgs, endpoint string, exp time.Time) 
 	}
 
 	blocks = append(blocks, slack.NewContextBlock("",
-		slack.NewTextBlockObject(slack.PlainTextType, fmt.Sprintf("Actor: %s", args.Actor), false, false)))
+		slack.NewTextBlockObject(slack.PlainTextType, fmt.Sprintf("Actor: %s", props.Actor), false, false)))
 
 	return blocks
+}
+
+func maybeCommitURL(repo string, event github.PushEvent) string {
+	if event.HeadCommit == nil || event.HeadCommit.URL == nil {
+		if event.Repo == nil {
+			return "https://github.com/" + repo
+		}
+
+		return *event.Repo.URL
+	}
+
+	return *event.HeadCommit.URL
 }
