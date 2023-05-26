@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   checks:
-    name: Build with Docker
+    name: Code Checks
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
