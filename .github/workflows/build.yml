@@ -43,8 +43,8 @@ jobs:
         if: failure()
         uses: namespacelabs/breakpoint-action@v0
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
           duration: 30m
           authorized-users: edganiukov,hugosantos,n-g,htr,nichtverstehen,gmichelo
-          webhook-definition: ./.github/slack-notification.json
+          slack-announce-channel: "#ci"
