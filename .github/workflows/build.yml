@@ -17,7 +17,7 @@ env:
 jobs:
   docker-build:
     name: Build with Docker
-    runs-on: ubuntu-22.04
+    runs-on: nscloud
     steps:
       - name: Checkout
         uses: actions/checkout@v3
