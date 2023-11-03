@@ -23,7 +23,7 @@ require (
 	golang.org/x/crypto v0.7.0
 	golang.org/x/exp v0.0.0-20221205204356-47842c84f3db
 	golang.org/x/sync v0.2.0
-	google.golang.org/grpc v1.55.0
+	google.golang.org/grpc v1.56.3
 	google.golang.org/protobuf v1.30.0
 	inet.af/tcpproxy v0.0.0-20221017015627-91f861402626
 )
