@@ -37,7 +37,7 @@ func Serve(ctx context.Context, endpoint string, md metadata.MD, handlers Handle
 
 	zerolog.Ctx(ctx).Info().Str("endpoint", endpoint).Msg("Connecting")
 
-	conn, err := quic.DialAddrContext(ctx, endpoint, tlsConf, DefaultConfig)
+	conn, err := quic.DialAddr(ctx, endpoint, tlsConf, DefaultConfig)
 	if err != nil {
 		return err
 	}
