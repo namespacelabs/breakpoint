@@ -18,23 +18,9 @@ func ResolveSSHKeys(ctx context.Context, usernames []string) (map[string][]strin
 	for _, username := range usernames {
 		t := time.Now()
 
-		resp, err := http.Get(fmt.Sprintf("https://github.com/%s.keys", username))
+		keys, err := fetchKeys(username)
 		if err != nil {
-			return nil, err
-		}
-
-		if resp.StatusCode != 200 {
-			return nil, fmt.Errorf("unexpected status code %d", resp.StatusCode)
-		}
-
-		contents, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read body: %w", err)
-		}
-
-		var keys []string
-		for _, line := range strings.Split(strings.TrimSpace(string(contents)), "\n") {
-			keys = append(keys, strings.TrimSpace(line))
+			return nil, fmt.Errorf("failed to fetch SSH keys for GitHub user %q: %w", username, err)
 		}
 
 		m[username] = keys
@@ -43,4 +29,27 @@ func ResolveSSHKeys(ctx context.Context, usernames []string) (map[string][]strin
 	}
 
 	return m, nil
+}
+
+func fetchKeys(username string) ([]string, error) {
+	resp, err := http.Get(fmt.Sprintf("https://github.com/%s.keys", username))
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("unexpected status code %d", resp.StatusCode)
+	}
+
+	contents, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read body: %w", err)
+	}
+
+	var keys []string
+	for _, line := range strings.Split(strings.TrimSpace(string(contents)), "\n") {
+		keys = append(keys, strings.TrimSpace(line))
+	}
+
+	return keys, nil
 }
