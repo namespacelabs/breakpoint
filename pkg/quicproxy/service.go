@@ -72,7 +72,7 @@ func NewServer(ctx context.Context, opts ServerOpts) (*Server, error) {
 		return nil, err
 	}
 
-	srv.listener = listener
+	srv.listener = *listener
 	return srv, nil
 }
 
