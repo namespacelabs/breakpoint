@@ -23,6 +23,11 @@ func ResolveSSHKeys(ctx context.Context, usernames []string) (map[string][]strin
 			return nil, fmt.Errorf("failed to fetch SSH keys for GitHub user %q: %w", username, err)
 		}
 
+		if len(keys) == 0 {
+			zerolog.Ctx(ctx).Warn().Str("username", username).Dur("took", time.Since(t)).Msg("No keys found")
+			continue
+		}
+
 		m[username] = keys
 
 		zerolog.Ctx(ctx).Info().Str("username", username).Dur("took", time.Since(t)).Msg("Resolved keys")
