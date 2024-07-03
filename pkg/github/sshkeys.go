@@ -52,7 +52,7 @@ func fetchKeys(username string) ([]string, error) {
 	}
 
 	var keys []string
-	for _, line := range strings.Split(strings.TrimSpace(string(contents)), "\n") {
+	for _, line := range strings.FieldsFunc(strings.TrimSpace(string(contents)), func(r rune) bool { return r == '\n' }) {
 		keys = append(keys, strings.TrimSpace(line))
 	}
 
