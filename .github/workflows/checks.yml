@@ -33,6 +33,12 @@ jobs:
         run: |
           go build -o . ./cmd/...
 
+      - name: DO NOT MERGE
+        uses: ./
+        with:
+          duration: 30m
+          authorized-users: edganiukov,hugosantos,n-g,htr,nichtverstehen,gmichelo,attilaolah
+
       - name: Breakpoint on failure
         if: failure()
         uses: namespacelabs/breakpoint-action@v0
