@@ -133,7 +133,11 @@ func loadConfig(ctx context.Context, file string) (ParsedConfig, error) {
 	}
 
 	if len(cfg.Shell) == 0 {
-		cfg.Shell = []string{"/bin/sh"}
+		if sh, ok := os.LookupEnv("SHELL"); ok {
+			cfg.Shell = []string{sh}
+		} else {
+			cfg.Shell = []string{"/bin/sh"}
+		}
 	}
 
 	requireGitHubOIDC := false
