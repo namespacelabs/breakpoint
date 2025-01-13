@@ -228,10 +228,7 @@ func (m *Manager) announce() {
 	}
 
 	ww := wordwrap.NewWriter(80)
-	fmt.Fprintln(ww)
-	fmt.Fprintf(ww, "Breakpoint running until %v (%v).\n", deadline.Format(Stamp), humanize.Time(deadline))
-	fmt.Fprintln(ww)
-	fmt.Fprintf(ww, "Connect with: ssh -p %s runner@%s\n", port, host)
+	fmt.Fprintf(ww, "Breakpoint! Running until %v (%v).", deadline.Format(Stamp), humanize.Time(deadline))
 	_ = ww.Close()
 
 	lines := strings.Split(ww.String(), "\n")
@@ -252,6 +249,9 @@ func (m *Manager) announce() {
 	}
 	fmt.Fprintf(os.Stderr, "└─%s─┘\n", longline)
 	fmt.Fprintln(os.Stderr)
+
+	fmt.Fprintf(os.Stderr, "  Connect with:\n\n")
+	fmt.Fprintf(os.Stderr, "    ssh -p %s runner@%s\n", port, host)
 }
 
 func nchars(ch rune, n int) string {
