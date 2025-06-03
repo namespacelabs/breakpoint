@@ -70,6 +70,14 @@ func (g waiterService) Extend(ctx context.Context, req *pb.ExtendRequest) (*pb.E
 	}, nil
 }
 
+func (g waiterService) Status(ctx context.Context, req *emptypb.Empty) (*pb.StatusResponse, error) {
+	status := g.manager.Status()
+	return &pb.StatusResponse{
+		Expiration: timestamppb.New(status.Expiration),
+		Endpoint:   status.Endpoint,
+	}, nil
+}
+
 func (g waiterService) Resume(ctx context.Context, req *emptypb.Empty) (*emptypb.Empty, error) {
 	g.manager.StopWait()
 	return &emptypb.Empty{}, nil

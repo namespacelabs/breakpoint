@@ -5,14 +5,14 @@ import (
 	"io"
 	"net"
 	"strings"
+	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/muesli/reflow/wordwrap"
 )
 
-func PrintConnectionInfo(status ManagerStatus, output io.Writer) {
-	host, port, _ := net.SplitHostPort(status.Endpoint)
-	deadline := status.Expiration
+func PrintConnectionInfo(endpoint string, deadline time.Time, output io.Writer) {
+	host, port, _ := net.SplitHostPort(endpoint)
 
 	if host == "" && port == "" {
 		return
