@@ -2,7 +2,6 @@ package waiter
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"math"
 	"net"
@@ -12,7 +11,6 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
-	"github.com/muesli/reflow/wordwrap"
 	"github.com/rs/zerolog"
 	v1 "namespacelabs.dev/breakpoint/api/private/v1"
 	"namespacelabs.dev/breakpoint/pkg/webhook"
@@ -29,6 +27,11 @@ type ManagerOpts struct {
 
 	Webhooks  []v1.Webhook
 	SlackBots []v1.SlackBot
+}
+
+type ManagerStatus struct {
+	Endpoint   string    `json:"endpoint"`
+	Expiration time.Time `json:"expiration"`
 }
 
 type Manager struct {
@@ -157,6 +160,15 @@ func (m *Manager) Endpoint() string {
 	return m.endpoint
 }
 
+func (m *Manager) Status() ManagerStatus {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return ManagerStatus{
+		Endpoint:   m.endpoint,
+		Expiration: m.expiration,
+	}
+}
+
 func (m *Manager) SetEndpoint(addr string) {
 	m.mu.Lock()
 	m.endpoint = addr
@@ -218,40 +230,8 @@ func expand(addr string, exp time.Time) func(key string) string {
 }
 
 func (m *Manager) announce() {
-	m.mu.Lock()
-	host, port, _ := net.SplitHostPort(m.endpoint)
-	deadline := m.expiration
-	m.mu.Unlock()
-
-	if host == "" && port == "" {
-		return
-	}
-
-	ww := wordwrap.NewWriter(80)
-	fmt.Fprintf(ww, "Breakpoint! Running until %v (%v).", deadline.Format(Stamp), humanize.Time(deadline))
-	_ = ww.Close()
-
-	lines := strings.Split(ww.String(), "\n")
-
-	longestLine := 0
-	for _, l := range lines {
-		if len(l) > longestLine {
-			longestLine = len(l)
-		}
-	}
-
-	longline := nchars('─', longestLine)
-	spaces := nchars(' ', longestLine)
-	fmt.Fprintln(os.Stderr)
-	fmt.Fprintf(os.Stderr, "┌─%s─┐\n", longline)
-	for _, l := range lines {
-		fmt.Fprintf(os.Stderr, "│ %s%s │\n", l, spaces[len(l):])
-	}
-	fmt.Fprintf(os.Stderr, "└─%s─┘\n", longline)
-	fmt.Fprintln(os.Stderr)
-
-	fmt.Fprintf(os.Stderr, "  Connect with:\n\n")
-	fmt.Fprintf(os.Stderr, "    ssh -p %s runner@%s\n", port, host)
+	status := m.Status()
+	PrintConnectionInfo(status, os.Stderr)
 }
 
 func nchars(ch rune, n int) string {
