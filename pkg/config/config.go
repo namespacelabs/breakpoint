@@ -22,6 +22,10 @@ func LoadConfig(ctx context.Context, file string) (ParsedConfig, error) {
 		return cfg, err
 	}
 
+	if cfg.Endpoint == "" {
+		return cfg, errors.New("missing endpoint")
+	}
+
 	for _, wh := range cfg.Webhooks {
 		if wh.URL == "" {
 			return cfg, errors.New("webhook is missing url")
