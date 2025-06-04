@@ -73,8 +73,9 @@ func (g waiterService) Extend(ctx context.Context, req *pb.ExtendRequest) (*pb.E
 func (g waiterService) Status(ctx context.Context, req *emptypb.Empty) (*pb.StatusResponse, error) {
 	status := g.manager.Status()
 	return &pb.StatusResponse{
-		Expiration: timestamppb.New(status.Expiration),
-		Endpoint:   status.Endpoint,
+		Expiration:     timestamppb.New(status.Expiration),
+		Endpoint:       status.Endpoint,
+		NumConnections: status.NumConnections,
 	}, nil
 }
 
