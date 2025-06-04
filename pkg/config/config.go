@@ -5,12 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/metadata"
 	internalv1 "namespacelabs.dev/breakpoint/api/private/v1"
-	"namespacelabs.dev/breakpoint/api/public/v1"
+	v1 "namespacelabs.dev/breakpoint/api/public/v1"
 	"namespacelabs.dev/breakpoint/pkg/github"
 	"namespacelabs.dev/breakpoint/pkg/githuboidc"
 	"namespacelabs.dev/breakpoint/pkg/jsonfile"
@@ -36,7 +37,11 @@ func LoadConfig(ctx context.Context, file string) (ParsedConfig, error) {
 		if sh, ok := os.LookupEnv("SHELL"); ok {
 			cfg.Shell = []string{sh}
 		} else {
-			cfg.Shell = []string{"/bin/sh"}
+			if runtime.GOOS == "windows" {
+				cfg.Shell = []string{"C:\\Windows\\System32\\cmd.exe"}
+			} else {
+				cfg.Shell = []string{"/bin/sh"}
+			}
 		}
 	}
 
