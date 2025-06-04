@@ -20,8 +20,19 @@ func newExtendCmd() *cobra.Command {
 	}
 
 	extendWaitFor := cmd.Flags().Duration("for", time.Minute*30, "How much to extend the breakpoint by.")
+	extendWaitDuration := cmd.Flags().Duration("duration", 0, "Alias of --for")
+	cmd.MarkFlagsMutuallyExclusive("duration", "for")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		duration := *extendWaitDuration
+		if *extendWaitDuration == 0 {
+			duration = *extendWaitFor
+		}
+
+		if duration <= 0 {
+			return fmt.Errorf("duration must be positive")
+		}
+
 		clt, conn, err := bcontrol.Connect(cmd.Context())
 		if err != nil {
 			return err
@@ -30,7 +41,7 @@ func newExtendCmd() *cobra.Command {
 		defer conn.Close()
 
 		resp, err := clt.Extend(cmd.Context(), &pb.ExtendRequest{
-			WaitFor: durationpb.New(*extendWaitFor),
+			WaitFor: durationpb.New(duration),
 		})
 		if err != nil {
 			return err
