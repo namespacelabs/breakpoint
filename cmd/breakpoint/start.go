@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"namespacelabs.dev/breakpoint/api/private/v1"
+	v1 "namespacelabs.dev/breakpoint/api/private/v1"
 	"namespacelabs.dev/breakpoint/pkg/bcontrol"
+	"namespacelabs.dev/breakpoint/pkg/execbackground"
 	"namespacelabs.dev/breakpoint/pkg/waiter"
 )
 
@@ -35,9 +35,7 @@ func newStartCmd() *cobra.Command {
 
 		procArgs := []string{"wait", "--config", *configPath}
 		proc := exec.Command(os.Args[0], procArgs...)
-		proc.SysProcAttr = &syscall.SysProcAttr{
-			Setsid: true,
-		}
+		execbackground.SetCreateSession(proc)
 
 		if err := proc.Start(); err != nil {
 			return fmt.Errorf("failed to start background process: %w", err)

@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/creack/pty"
 	"github.com/gliderlabs/ssh"
 	"github.com/rs/zerolog"
 	"go.uber.org/atomic"
@@ -96,21 +95,11 @@ func MakeServer(ctx context.Context, opts SSHServerOpts) (*SSHServer, error) {
 					opts.InteractiveMOTD(session)
 				}
 
-				cmd.Env = append(cmd.Env, fmt.Sprintf("TERM=%s", ptyReq.Term))
-				ptyFile, err := pty.Start(cmd)
-				if err != nil {
+				if err := handlePty(session, ptyReq, winCh, cmd); err != nil {
 					sessionLog.Err(err).Msg("pty start failed")
 					session.Exit(1)
 					return
 				}
-
-				defer ptyFile.Close()
-
-				go syncWinSize(ptyFile, winCh)
-				go func() {
-					_, _ = io.Copy(ptyFile, session) // stdin
-				}()
-				_, _ = io.Copy(session, ptyFile) // stdout
 			} else {
 				cmd.Stdout = session
 				cmd.Stderr = session
