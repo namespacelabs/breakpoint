@@ -11,6 +11,7 @@ option go_package = "namespacelabs.dev/breakpoint/api/private/v1";
 service ControlService {
   rpc Resume(google.protobuf.Empty) returns (google.protobuf.Empty);
   rpc Extend(ExtendRequest) returns (ExtendResponse);
+  rpc Status(google.protobuf.Empty) returns (StatusResponse);
 }
 
 message ExtendRequest {
@@ -19,4 +20,9 @@ message ExtendRequest {
 
 message ExtendResponse {
   google.protobuf.Timestamp expiration = 1;
+}
+
+message StatusResponse {
+    google.protobuf.Timestamp expiration = 1;
+    string                    endpoint   = 2;
 }

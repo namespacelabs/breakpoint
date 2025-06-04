@@ -231,7 +231,7 @@ func expand(addr string, exp time.Time) func(key string) string {
 
 func (m *Manager) announce() {
 	status := m.Status()
-	PrintConnectionInfo(status, os.Stderr)
+	PrintConnectionInfo(status.Endpoint, status.Expiration, os.Stderr)
 }
 
 func nchars(ch rune, n int) string {
