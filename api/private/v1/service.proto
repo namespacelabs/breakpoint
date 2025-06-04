@@ -23,6 +23,7 @@ message ExtendResponse {
 }
 
 message StatusResponse {
-    google.protobuf.Timestamp expiration = 1;
-    string                    endpoint   = 2;
+    google.protobuf.Timestamp expiration      = 1;
+    string                    endpoint        = 2;
+    uint32                    num_connections = 3;
 }

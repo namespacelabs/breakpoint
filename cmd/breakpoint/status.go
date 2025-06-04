@@ -41,6 +41,8 @@ func newStatusCmd() *cobra.Command {
 
 		waiter.PrintConnectionInfo(status.Endpoint, status.Expiration.AsTime(), os.Stdout)
 
+		fmt.Fprintf(os.Stdout, "\nActive connections: %d\n", status.GetNumConnections())
+
 		return nil
 	}
 

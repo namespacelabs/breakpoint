@@ -6,12 +6,14 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"io"
+	"net"
 	"os/exec"
 	"time"
 
 	"github.com/creack/pty"
 	"github.com/gliderlabs/ssh"
 	"github.com/rs/zerolog"
+	"go.uber.org/atomic"
 	gossh "golang.org/x/crypto/ssh"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
@@ -32,7 +34,12 @@ type sshKey struct {
 	Owner string
 }
 
-func MakeServer(ctx context.Context, opts SSHServerOpts) (*ssh.Server, error) {
+type SSHServer struct {
+	Server         *ssh.Server
+	NumConnections func() uint32
+}
+
+func MakeServer(ctx context.Context, opts SSHServerOpts) (*SSHServer, error) {
 	var authorizedKeys []sshKey
 	for key, owner := range opts.AuthorizedKeys {
 		key, _, _, _, err := ssh.ParseAuthorizedKey([]byte(key))
@@ -43,6 +50,8 @@ func MakeServer(ctx context.Context, opts SSHServerOpts) (*ssh.Server, error) {
 	}
 
 	l := zerolog.Ctx(ctx).With().Str("service", "sshd").Logger()
+
+	connCount := atomic.NewUint32(0)
 
 	srv := &ssh.Server{
 		Handler: func(session ssh.Session) {
@@ -135,6 +144,16 @@ func MakeServer(ctx context.Context, opts SSHServerOpts) (*ssh.Server, error) {
 		SubsystemHandlers: map[string]ssh.SubsystemHandler{
 			"sftp": makeSftpHandler(l),
 		},
+
+		ConnCallback: func(ctx ssh.Context, conn net.Conn) net.Conn {
+			connCount.Inc()
+			go func() {
+				<-ctx.Done()
+				connCount.Dec()
+			}()
+
+			return conn
+		},
 	}
 
 	srv.ChannelHandlers = maps.Clone(ssh.DefaultChannelHandlers)
@@ -155,7 +174,10 @@ func MakeServer(ctx context.Context, opts SSHServerOpts) (*ssh.Server, error) {
 
 	zerolog.Ctx(ctx).Info().Str("host_key_fingerprint", gossh.FingerprintSHA256(signer.PublicKey())).Dur("took", time.Since(t)).Msg("Generated ssh host key")
 
-	return srv, nil
+	return &SSHServer{
+		Server:         srv,
+		NumConnections: connCount.Load,
+	}, nil
 }
 
 func lookupKey(allowed []sshKey, key ssh.PublicKey) (sshKey, bool) {

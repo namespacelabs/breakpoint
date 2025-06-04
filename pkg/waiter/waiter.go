@@ -30,8 +30,9 @@ type ManagerOpts struct {
 }
 
 type ManagerStatus struct {
-	Endpoint   string    `json:"endpoint"`
-	Expiration time.Time `json:"expiration"`
+	Endpoint       string    `json:"endpoint"`
+	Expiration     time.Time `json:"expiration"`
+	NumConnections uint32    `json:"num_connections"`
 }
 
 type Manager struct {
@@ -40,11 +41,12 @@ type Manager struct {
 
 	opts ManagerOpts
 
-	mu         sync.Mutex
-	updated    chan struct{}
-	expiration time.Time
-	endpoint   string
-	resources  []io.Closer
+	mu                      sync.Mutex
+	updated                 chan struct{}
+	expiration              time.Time
+	endpoint                string
+	resources               []io.Closer
+	connectionCountCallback func() uint32
 }
 
 func NewManager(ctx context.Context, opts ManagerOpts) (*Manager, context.Context) {
@@ -164,8 +166,9 @@ func (m *Manager) Status() ManagerStatus {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return ManagerStatus{
-		Endpoint:   m.endpoint,
-		Expiration: m.expiration,
+		Endpoint:       m.endpoint,
+		Expiration:     m.expiration,
+		NumConnections: m.connectionCountCallback(),
 	}
 }
 
@@ -202,6 +205,12 @@ func (m *Manager) SetEndpoint(addr string) {
 			m.logger.Info().Dur("took", time.Since(t)).Str("url", wh.URL).Msg("Notified webhook")
 		}
 	}
+}
+
+func (m *Manager) SetConnectionCountCallback(callback func() uint32) {
+	m.mu.Lock()
+	m.connectionCountCallback = callback
+	m.mu.Unlock()
 }
 
 func expand(addr string, exp time.Time) func(key string) string {

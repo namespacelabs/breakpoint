@@ -80,12 +80,14 @@ func newWaitCmd() *cobra.Command {
 			return err
 		}
 
+		mgr.SetConnectionCountCallback(sshd.NumConnections)
+
 		eg, ctx := errgroup.WithContext(ctx)
 
 		pl := passthrough.NewListener(ctx, dummyAddr{})
 
 		eg.Go(func() error {
-			return sshd.Serve(pl)
+			return sshd.Server.Serve(pl)
 		})
 
 		eg.Go(func() error {
