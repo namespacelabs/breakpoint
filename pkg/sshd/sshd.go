@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"os/exec"
+	"runtime"
 	"time"
 
 	"github.com/gliderlabs/ssh"
@@ -61,7 +62,11 @@ func MakeServer(ctx context.Context, opts SSHServerOpts) (*SSHServer, error) {
 
 			args := opts.Shell[1:]
 			if session.RawCommand() != "" {
-				args = []string{"-c", session.RawCommand()}
+				if runtime.GOOS == "windows" {
+					args = []string{"/C", session.RawCommand()}
+				} else {
+					args = []string{"-c", session.RawCommand()}
+				}
 			}
 
 			cmd := exec.Command(opts.Shell[0], args...)
