@@ -8,7 +8,9 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/emptypb"
+	v1 "namespacelabs.dev/breakpoint/api/private/v1"
 	"namespacelabs.dev/breakpoint/pkg/bcontrol"
 	"namespacelabs.dev/breakpoint/pkg/waiter"
 )
@@ -16,6 +18,10 @@ import (
 func init() {
 	rootCmd.AddCommand(newHoldCmd())
 }
+
+const (
+	extendBy = 30 * time.Second
+)
 
 func newHoldCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -87,20 +93,13 @@ func holdWhileConnected(ctx context.Context) error {
 
 	waiter.PrintConnectionInfo(status.Endpoint, status.Expiration.AsTime(), os.Stderr)
 
-	ticker := time.NewTicker(1 * time.Second)
+	tickDuration := 5 * time.Second
+	ticker := time.NewTicker(tickDuration)
 	defer ticker.Stop()
 
 	fmt.Printf("Waiting until breakpoint has no active connections\n")
 
 	errCount := 0
-	getNumConnections := func() (uint32, error) {
-		status, err := clt.Status(ctx, &emptypb.Empty{})
-		if err != nil {
-			return 0, err
-		}
-
-		return status.GetNumConnections(), nil
-	}
 
 	for {
 		select {
@@ -108,7 +107,7 @@ func holdWhileConnected(ctx context.Context) error {
 			return ctx.Err()
 
 		case <-ticker.C:
-			numConnections, err := getNumConnections()
+			status, err := clt.Status(ctx, &emptypb.Empty{})
 			if err != nil {
 				errCount++
 				if errCount > 5 {
@@ -121,8 +120,13 @@ func holdWhileConnected(ctx context.Context) error {
 
 			errCount = 0
 
-			if numConnections > 0 {
-				fmt.Printf("Active connections: %d, waiting\n", numConnections)
+			expiration := status.GetExpiration().AsTime()
+			if !expiration.IsZero() && time.Now().Add(2*tickDuration).After(expiration) {
+				tryExtendBreakpoint(ctx, expiration, clt)
+			}
+
+			if status.GetNumConnections() > 0 {
+				fmt.Printf("Active connections: %d, waiting\n", status.GetNumConnections())
 				continue
 			}
 
@@ -130,4 +134,17 @@ func holdWhileConnected(ctx context.Context) error {
 			return nil
 		}
 	}
+}
+
+func tryExtendBreakpoint(ctx context.Context, currentExpiration time.Time, clt v1.ControlServiceClient) {
+	fmt.Printf("Breakpoint expiring %s, extending by %s\n", humanize.Time(currentExpiration), extendBy)
+
+	ret, err := clt.Extend(ctx, &v1.ExtendRequest{
+		WaitFor: durationpb.New(extendBy),
+	})
+	if err != nil {
+		fmt.Printf("Unable to extend breakpoint, %v", err)
+	}
+
+	fmt.Printf("Breakpoint now expires %s", humanize.Time(ret.GetExpiration().AsTime()))
 }
