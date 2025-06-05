@@ -32,6 +32,7 @@ func newHoldCmd() *cobra.Command {
 	holdFor := cmd.Flags().Duration("for", time.Minute*30, "How much to extend the breakpoint by.")
 	holdDuration := cmd.Flags().Duration("duration", 0, "Alias of --for")
 	shouldHoldWhileConnected := cmd.Flags().Bool("while-connected", false, "Keep holding while there are active connections, even after duration has passed")
+	stopWhenDone := cmd.Flags().Bool("stop", false, "Stop the breakpoint server after holding")
 	cmd.MarkFlagsMutuallyExclusive("duration", "for", "while-connected")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
@@ -40,11 +41,26 @@ func newHoldCmd() *cobra.Command {
 			duration = *holdFor
 		}
 
+		ctx := cmd.Context()
 		if *shouldHoldWhileConnected {
-			return holdWhileConnected(cmd.Context())
+			if err := holdWhileConnected(ctx); err != nil {
+				return err
+			}
 		} else {
-			return holdForDuration(cmd.Context(), duration)
+			if err := holdForDuration(ctx, duration); err != nil {
+				return err
+			}
 		}
+
+		if *stopWhenDone {
+			if err := stopBreakpoint(ctx); err != nil {
+				fmt.Printf("Failed to stop breakpoint: %v\n", err)
+			} else {
+				fmt.Printf("Stopped breakpoint\n")
+			}
+		}
+
+		return nil
 	}
 
 	return cmd
@@ -83,7 +99,7 @@ func holdWhileConnected(ctx context.Context) error {
 
 	status, err := clt.Status(ctx, &emptypb.Empty{})
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to fetch breakpoint status, is breakpoint running")
 	}
 
 	if status.GetNumConnections() < 1 {
@@ -99,8 +115,6 @@ func holdWhileConnected(ctx context.Context) error {
 
 	fmt.Printf("Waiting until breakpoint has no active connections\n")
 
-	errCount := 0
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -109,16 +123,8 @@ func holdWhileConnected(ctx context.Context) error {
 		case <-ticker.C:
 			status, err := clt.Status(ctx, &emptypb.Empty{})
 			if err != nil {
-				errCount++
-				if errCount > 5 {
-					return fmt.Errorf("unable to fetch breakpoint status: %w", err)
-				} else {
-					fmt.Printf("unable to fetch breakpoint status, trying again\n")
-				}
-				continue
+				return fmt.Errorf("unable to fetch breakpoint status, assuming no longer running")
 			}
-
-			errCount = 0
 
 			expiration := status.GetExpiration().AsTime()
 			if !expiration.IsZero() && time.Now().Add(2*tickDuration).After(expiration) {
@@ -143,8 +149,20 @@ func tryExtendBreakpoint(ctx context.Context, currentExpiration time.Time, clt v
 		WaitFor: durationpb.New(extendBy),
 	})
 	if err != nil {
-		fmt.Printf("Unable to extend breakpoint, %v", err)
+		fmt.Printf("Unable to extend breakpoint: %v\n", err)
 	}
 
-	fmt.Printf("Breakpoint now expires %s", humanize.Time(ret.GetExpiration().AsTime()))
+	fmt.Printf("Breakpoint now expires %s\n", humanize.Time(ret.GetExpiration().AsTime()))
+}
+
+func stopBreakpoint(ctx context.Context) error {
+	clt, conn, err := bcontrol.Connect(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer conn.Close()
+
+	_, err = clt.Resume(ctx, &emptypb.Empty{})
+	return err
 }
