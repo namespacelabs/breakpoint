@@ -79,6 +79,12 @@ func holdWhileConnected(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	if status.GetNumConnections() < 1 {
+		fmt.Printf("No active connections, exiting\n")
+		return nil
+	}
+
 	waiter.PrintConnectionInfo(status.Endpoint, status.Expiration.AsTime(), os.Stderr)
 
 	ticker := time.NewTicker(1 * time.Second)
@@ -92,7 +98,8 @@ func holdWhileConnected(ctx context.Context) error {
 		if err != nil {
 			return 0, err
 		}
-		return status.NumConnections, nil
+
+		return status.GetNumConnections(), nil
 	}
 
 	for {
@@ -114,7 +121,7 @@ func holdWhileConnected(ctx context.Context) error {
 
 			errCount = 0
 
-			if numConnections != 0 {
+			if numConnections > 0 {
 				fmt.Printf("Active connections: %d, waiting\n", numConnections)
 				continue
 			}
