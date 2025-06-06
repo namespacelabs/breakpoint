@@ -40,7 +40,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Run Go tests
         runs: |
@@ -73,6 +73,25 @@ If you need more time, run `breakpoint extend` to extend the breakpoint duratio
 by 30 more minutes (or extend by more with the `--for` flag).
 
 When you are done, you can end the breakpoint session with `breakpoint resume`.
+
+> [!TIP]
+> You can also run Breakpoint in the background, by adding `mode: background` to the actions inputs. \
+> That way, you can connect to it at any time during your workflow
+> 
+> <details>
+>  <summary>Example</summary>
+>  <p>
+>
+> ```yaml
+>       - name: Breakpoint in the background
+>        uses: namespacelabs/breakpoint-action@v0
+>        with:
+>          mode: background
+>          authorized-users: jack123, alice321
+> ```
+> </p></details>
+>
+> [More info](https://github.com/namespacelabs/breakpoint-action?tab=readme-ov-file#run-in-the-background)
 
 By default, the Breakpoint Action uses a shared `rendezvous` server provided by
 Namespace Labs for free. Even though a shared server is used, your SSH traffic is always _encrypted end-to-end_ (see Architecture).
