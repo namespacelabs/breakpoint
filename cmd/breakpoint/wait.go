@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/muesli/reflow/wordwrap"
@@ -74,6 +75,10 @@ func newWaitCmd() *cobra.Command {
 				_ = ww.Close()
 
 				_, _ = w.Write(ww.Bytes())
+			},
+			WriteNotify: func() {
+				// FIXME: mgr.ExtendWait sends down `m.updated` channel, which announces. Introduce new method?
+				mgr.ExtendWait(5 * time.Minute)
 			},
 		})
 		if err != nil {
