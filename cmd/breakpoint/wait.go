@@ -77,8 +77,7 @@ func newWaitCmd() *cobra.Command {
 				_, _ = w.Write(ww.Bytes())
 			},
 			WriteNotify: func() {
-				// FIXME: mgr.ExtendWait sends down `m.updated` channel, which announces. Introduce new method?
-				mgr.ExtendWait(5 * time.Minute)
+				mgr.ExtendWait(1*time.Minute, false)
 			},
 		})
 		if err != nil {

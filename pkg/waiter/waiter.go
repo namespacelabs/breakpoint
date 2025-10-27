@@ -35,6 +35,10 @@ type ManagerStatus struct {
 	NumConnections uint32    `json:"num_connections"`
 }
 
+type update struct {
+	announce bool
+}
+
 type Manager struct {
 	ctx    context.Context
 	logger zerolog.Logger
@@ -42,7 +46,7 @@ type Manager struct {
 	opts ManagerOpts
 
 	mu                      sync.Mutex
-	updated                 chan struct{}
+	updated                 chan update
 	expiration              time.Time
 	endpoint                string
 	resources               []io.Closer
@@ -56,7 +60,7 @@ func NewManager(ctx context.Context, opts ManagerOpts) (*Manager, context.Contex
 		ctx:        ctx,
 		logger:     l,
 		opts:       opts,
-		updated:    make(chan struct{}, 1),
+		updated:    make(chan update, 1),
 		expiration: time.Now().Add(opts.InitialDur),
 	}
 
@@ -95,7 +99,7 @@ func (m *Manager) loop(ctx context.Context) {
 
 	for {
 		select {
-		case _, ok := <-m.updated:
+		case update, ok := <-m.updated:
 			if !ok {
 				return
 			}
@@ -105,7 +109,9 @@ func (m *Manager) loop(ctx context.Context) {
 			m.mu.Unlock()
 
 			exitTimer.Reset(time.Until(newExp))
-			m.announce()
+			if update.announce {
+				m.announce()
+			}
 
 		case <-exitTimer.C:
 			// Timer has expired, terminate the program
@@ -130,13 +136,13 @@ func logTick() time.Duration {
 	return math.MaxInt64
 }
 
-func (m *Manager) ExtendWait(dur time.Duration) time.Time {
+func (m *Manager) ExtendWait(dur time.Duration, announce bool) time.Time {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	m.expiration = m.expiration.Add(dur)
 
-	m.updated <- struct{}{}
+	m.updated <- update{announce: announce}
 
 	m.logger.Info().
 		Dur("dur", dur).
@@ -188,7 +194,7 @@ func (m *Manager) SetEndpoint(addr string) {
 	m.resources = resources
 	m.mu.Unlock()
 
-	m.updated <- struct{}{}
+	m.updated <- update{announce: true}
 
 	expandf := expand(addr, m.Expiration())
 
