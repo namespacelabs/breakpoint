@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/muesli/reflow/wordwrap"
@@ -77,7 +76,9 @@ func newWaitCmd() *cobra.Command {
 				_, _ = w.Write(ww.Bytes())
 			},
 			WriteNotify: func() {
-				mgr.ExtendWait(1*time.Minute, false)
+				if cfg.ParsedDurationAutoExtend > 0 {
+					mgr.ExtendWait(cfg.ParsedDurationAutoExtend, false)
+				}
 			},
 		})
 		if err != nil {
