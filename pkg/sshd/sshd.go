@@ -19,8 +19,6 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-const notifyDelay = 1 * time.Minute
-
 type SSHServerOpts struct {
 	AllowedUsers   []string
 	AuthorizedKeys map[string]string // Key to owner
@@ -222,7 +220,7 @@ func (s notifyingSession) listen(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(notifyDelay):
+		case <-time.After(1 * time.Second):
 		}
 	}
 }
