@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/spf13/cobra"
 	"namespacelabs.dev/breakpoint/pkg/blog"
@@ -20,7 +22,10 @@ func main() {
 
 	l := blog.New()
 
-	err := rootCmd.ExecuteContext(l.WithContext(context.Background()))
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	err := rootCmd.ExecuteContext(l.WithContext(ctx))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
