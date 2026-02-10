@@ -46,5 +46,5 @@ jobs:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
           duration: 30m
-          authorized-users: edganiukov,hugosantos,n-g,htr,nichtverstehen,gmichelo
+          authorized-users: hugosantos,n-g,htr
           slack-announce-channel: "#ci"
