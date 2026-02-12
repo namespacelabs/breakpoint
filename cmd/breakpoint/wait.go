@@ -75,6 +75,11 @@ func newWaitCmd() *cobra.Command {
 
 				_, _ = w.Write(ww.Bytes())
 			},
+			WriteNotify: func() {
+				if cfg.ParsedDurationAutoExtend > 0 {
+					mgr.ExtendWait(cfg.ParsedDurationAutoExtend, false)
+				}
+			},
 		})
 		if err != nil {
 			return err

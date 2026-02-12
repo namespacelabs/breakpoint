@@ -27,6 +27,7 @@ type SSHServerOpts struct {
 	Dir            string
 
 	InteractiveMOTD func(io.Writer)
+	WriteNotify     func()
 }
 
 type sshKey struct {
@@ -94,23 +95,26 @@ func MakeServer(ctx context.Context, opts SSHServerOpts) (*SSHServer, error) {
 			// Make sure that the connection with the client is kept alive.
 			go keepAlive(ctx, sessionLog, session)
 
+			// Wrapping the session lets us know when writes are happening.
+			nsess := newNotifyingSession(ctx, session, opts.WriteNotify)
+
 			if isPty {
 				// Print MOTD only if no command was provided
-				if opts.InteractiveMOTD != nil && session.RawCommand() == "" {
-					opts.InteractiveMOTD(session)
+				if opts.InteractiveMOTD != nil && nsess.RawCommand() == "" {
+					opts.InteractiveMOTD(nsess)
 				}
 
-				if err := handlePty(session, ptyReq, winCh, cmd); err != nil {
+				if err := handlePty(nsess, ptyReq, winCh, cmd); err != nil {
 					sessionLog.Err(err).Msg("pty start failed")
-					session.Exit(1)
+					nsess.Exit(1)
 					return
 				}
 			} else {
-				cmd.Stdout = session
-				cmd.Stderr = session
+				cmd.Stdout = nsess
+				cmd.Stderr = nsess
 				if err := cmd.Start(); err != nil {
 					sessionLog.Err(err).Msg("start failed")
-					session.Exit(1)
+					nsess.Exit(1)
 					return
 				}
 			}
@@ -181,4 +185,50 @@ func lookupKey(allowed []sshKey, key ssh.PublicKey) (sshKey, bool) {
 		}
 	}
 	return sshKey{}, false
+}
+
+type notifyingSession struct {
+	ssh.Session
+	notifyCh chan struct{}
+	notify   func()
+}
+
+func newNotifyingSession(ctx context.Context, s ssh.Session, notify func()) ssh.Session {
+	if notify == nil {
+		return s
+	}
+
+	sess := notifyingSession{
+		Session:  s,
+		notifyCh: make(chan struct{}),
+		notify:   notify,
+	}
+	go sess.listen(ctx)
+	return sess
+}
+
+func (s notifyingSession) listen(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-s.notifyCh:
+		}
+
+		s.notify()
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(1 * time.Second):
+		}
+	}
+}
+
+func (s notifyingSession) Write(p []byte) (int, error) {
+	select {
+	case s.notifyCh <- struct{}{}:
+	default: // avoid blocking
+	}
+	return s.Session.Write(p)
 }
