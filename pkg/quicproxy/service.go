@@ -113,13 +113,19 @@ func (srv server) Register(req *apipb.RegisterRequest, server apipb.ProxyService
 	githubClaims, logger := validateGitHubOIDC(server.Context(), srv.logger, srv.ghJWKS)
 
 	if len(srv.restrictToRepositories) > 0 {
-		if githubClaims == nil || !slices.Contains(srv.restrictToRepositories, githubClaims.Repository) {
+		if githubClaims == nil {
+			return status.Errorf(codes.PermissionDenied, "no valid claim found to check required repository")
+		}
+		if !slices.Contains(srv.restrictToRepositories, githubClaims.Repository) {
 			return status.Errorf(codes.PermissionDenied, "repository %q not allowed", githubClaims.Repository)
 		}
 	}
 
 	if len(srv.restrictToOwners) > 0 {
-		if githubClaims == nil || !slices.Contains(srv.restrictToOwners, githubClaims.RepositoryOwner) {
+		if githubClaims == nil {
+			return status.Errorf(codes.PermissionDenied, "no valid claim found to check required repository owner")
+		}
+		if !slices.Contains(srv.restrictToOwners, githubClaims.RepositoryOwner) {
 			return status.Errorf(codes.PermissionDenied, "repository owner %q not allowed", githubClaims.RepositoryOwner)
 		}
 	}
@@ -137,7 +143,7 @@ func validateGitHubOIDC(ctx context.Context, logger zerolog.Logger, jwks *keyfun
 
 			if err != nil {
 				logger.Warn().Err(err).Msg("Failed to validate GitHub OIDC Token")
-			} else if slices.Contains(claims.Audience, apipb.GitHubOIDCAudience) {
+			} else if !slices.Contains(claims.Audience, apipb.GitHubOIDCAudience) {
 				logger.Warn().Str("expected", apipb.GitHubOIDCAudience).Strs("audience", claims.Audience).
 					Msg("Failed to validate GitHub OIDC Token audience")
 			} else {
