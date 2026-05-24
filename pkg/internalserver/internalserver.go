@@ -64,7 +64,7 @@ func ListenAndServe(ctx context.Context, mgr *waiter.Manager) error {
 }
 
 func (g waiterService) Extend(ctx context.Context, req *pb.ExtendRequest) (*pb.ExtendResponse, error) {
-	expiration := g.manager.ExtendWait(req.WaitFor.AsDuration())
+	expiration := g.manager.ExtendWait(req.WaitFor.AsDuration(), true)
 	return &pb.ExtendResponse{
 		Expiration: timestamppb.New(expiration),
 	}, nil

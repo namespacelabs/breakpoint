@@ -75,8 +75,18 @@ func LoadConfig(ctx context.Context, file string) (ParsedConfig, error) {
 	if err != nil {
 		return cfg, err
 	}
-
 	cfg.ParsedDuration = dur
+
+	if cfg.DurationAutoExtend != "" {
+		dur, err = time.ParseDuration(cfg.DurationAutoExtend)
+		if err != nil {
+			return cfg, err
+		}
+		if dur < 1*time.Minute {
+			dur = 1 * time.Minute
+		}
+		cfg.ParsedDurationAutoExtend = dur
+	}
 
 	keyMap, err := github.ResolveSSHKeys(ctx, cfg.AuthorizedGithubUsers)
 	if err != nil {
@@ -102,7 +112,8 @@ func LoadConfig(ctx context.Context, file string) (ParsedConfig, error) {
 type ParsedConfig struct {
 	internalv1.WaitConfig
 
-	AllKeys          map[string]string // Key ID -> Owned name
-	ParsedDuration   time.Duration
-	RegisterMetadata metadata.MD
+	AllKeys                  map[string]string // Key ID -> Owned name
+	ParsedDuration           time.Duration
+	ParsedDurationAutoExtend time.Duration
+	RegisterMetadata         metadata.MD
 }
