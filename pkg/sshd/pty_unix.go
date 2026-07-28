@@ -3,6 +3,7 @@
 package sshd
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -14,22 +15,23 @@ import (
 	"github.com/gliderlabs/ssh"
 )
 
-func handlePty(session io.ReadWriter, ptyReq ssh.Pty, winCh <-chan ssh.Window, cmd *exec.Cmd) error {
+func startPty(_ context.Context, session io.ReadWriter, ptyReq ssh.Pty, winCh <-chan ssh.Window, cmd *exec.Cmd) (func() error, error) {
 	cmd.Env = append(cmd.Env, fmt.Sprintf("TERM=%s", ptyReq.Term))
 	ptyFile, err := pty.Start(cmd)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	defer ptyFile.Close()
 
 	go syncWinSize(ptyFile, winCh)
 	go func() {
 		_, _ = io.Copy(ptyFile, session) // stdin
 	}()
-	_, _ = io.Copy(session, ptyFile) // stdout
 
-	return nil
+	return func() error {
+		_, _ = io.Copy(session, ptyFile) // stdout
+		_ = ptyFile.Close()
+		return cmd.Wait()
+	}, nil
 }
 
 func syncWinSize(ptyFile *os.File, winCh <-chan ssh.Window) {

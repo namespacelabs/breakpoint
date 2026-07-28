@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/MicahParks/keyfunc v1.9.0
+	github.com/charmbracelet/x/conpty v0.1.0
 	github.com/creack/pty v1.1.18
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gliderlabs/ssh v0.3.5
@@ -23,6 +24,7 @@ require (
 	golang.org/x/crypto v0.7.0
 	golang.org/x/exp v0.0.0-20221205204356-47842c84f3db
 	golang.org/x/sync v0.2.0
+	golang.org/x/sys v0.20.0
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
 	inet.af/tcpproxy v0.0.0-20221017015627-91f861402626
@@ -33,6 +35,7 @@ require (
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/charmbracelet/x/errors v0.0.0-20240508181413-e8d8b6e2de86 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
@@ -57,7 +60,6 @@ require (
 	golang.org/x/mod v0.11.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/oauth2 v0.7.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/tools v0.9.1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
