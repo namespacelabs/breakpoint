@@ -72,18 +72,18 @@ func TestWindowsPTYSession(t *testing.T) {
 	}
 
 	const marker = "breakpoint-windows-pty-ok"
-	var output bytes.Buffer
+	var stdout, stderr bytes.Buffer
 	session.Stdin = strings.NewReader("echo " + marker + "\r\nexit\r\n")
-	session.Stdout = &output
-	session.Stderr = &output
+	session.Stdout = &stdout
+	session.Stderr = &stderr
 
 	if err := session.Shell(); err != nil {
 		t.Fatal(err)
 	}
 	if err := session.Wait(); err != nil {
-		t.Fatalf("Windows shell failed: %v\noutput:\n%s", err, output.String())
+		t.Fatalf("Windows shell failed: %v\nstdout:\n%s\nstderr:\n%s", err, stdout.String(), stderr.String())
 	}
-	if !strings.Contains(output.String(), marker) {
-		t.Fatalf("Windows shell output did not contain %q:\n%s", marker, output.String())
+	if !strings.Contains(stdout.String(), marker) {
+		t.Fatalf("Windows shell stdout did not contain %q:\n%s\nstderr:\n%s", marker, stdout.String(), stderr.String())
 	}
 }
