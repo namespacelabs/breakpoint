@@ -100,20 +100,24 @@ func MakeServer(ctx context.Context, opts SSHServerOpts) (*SSHServer, error) {
 					opts.InteractiveMOTD(session)
 				}
 
-				if err := handlePty(session, ptyReq, winCh, cmd); err != nil {
+				waitPty, err := startPty(ctx, session, ptyReq, winCh, cmd)
+				if err != nil {
 					sessionLog.Err(err).Msg("pty start failed")
 					session.Exit(1)
 					return
 				}
-			} else {
-				cmd.Stdin = session
-				cmd.Stdout = session
-				cmd.Stderr = session
-				if err := cmd.Start(); err != nil {
-					sessionLog.Err(err).Msg("start failed")
-					session.Exit(1)
-					return
-				}
+				err = waitPty()
+				sessionLog.Info().Err(err).Msg("ssh session end")
+				return
+			}
+
+			cmd.Stdin = session
+			cmd.Stdout = session
+			cmd.Stderr = session
+			if err := cmd.Start(); err != nil {
+				sessionLog.Err(err).Msg("start failed")
+				session.Exit(1)
+				return
 			}
 
 			// XXX pass exit code to caller?
