@@ -3,13 +3,15 @@
 package sshd
 
 import (
-	"errors"
 	"io"
 	"os/exec"
 
 	"github.com/gliderlabs/ssh"
 )
 
-func handlePty(session io.ReadWriter, ptyReq ssh.Pty, winCh <-chan ssh.Window, cmd *exec.Cmd) error {
-	return errors.New("pty not supported in windows")
+func handlePty(session io.ReadWriter, _ ssh.Pty, _ <-chan ssh.Window, cmd *exec.Cmd) error {
+	cmd.Stdin = session
+	cmd.Stdout = session
+	cmd.Stderr = session
+	return cmd.Start()
 }

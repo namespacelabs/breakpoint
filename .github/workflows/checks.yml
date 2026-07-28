@@ -42,3 +42,16 @@ jobs:
           duration: 30m
           authorized-users: hugosantos,n-g,htr
           slack-announce-channel: "#ci"
+
+  windows-ssh:
+    name: Windows SSH
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 'stable'
+      - name: Test Windows SSH
+        run: go test ./pkg/sshd

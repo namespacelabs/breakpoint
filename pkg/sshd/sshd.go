@@ -106,6 +106,7 @@ func MakeServer(ctx context.Context, opts SSHServerOpts) (*SSHServer, error) {
 					return
 				}
 			} else {
+				cmd.Stdin = session
 				cmd.Stdout = session
 				cmd.Stderr = session
 				if err := cmd.Start(); err != nil {
