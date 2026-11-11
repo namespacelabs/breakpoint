@@ -111,7 +111,12 @@ func MakeServer(ctx context.Context, opts SSHServerOpts) (*SSHServer, error) {
 				return
 			}
 
-			cmd.Stdin = session
+			stdin, err := cmd.StdinPipe()
+			if err != nil {
+				sessionLog.Err(err).Msg("stdin pipe failed")
+				session.Exit(1)
+				return
+			}
 			cmd.Stdout = session
 			cmd.Stderr = session
 			if err := cmd.Start(); err != nil {
@@ -120,8 +125,15 @@ func MakeServer(ctx context.Context, opts SSHServerOpts) (*SSHServer, error) {
 				return
 			}
 
+			// Copy input independently so Wait only waits for the process and its output,
+			// not for the client to close stdin. Returning closes the SSH channel.
+			go func() {
+				defer stdin.Close()
+				_, _ = io.Copy(stdin, session)
+			}()
+
 			// XXX pass exit code to caller?
-			err := cmd.Wait()
+			err = cmd.Wait()
 			sessionLog.Info().Err(err).Msg("ssh session end")
 		},
 
