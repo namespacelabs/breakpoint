@@ -16,7 +16,7 @@ import (
 	gossh "golang.org/x/crypto/ssh"
 )
 
-func newSSHClient(t *testing.T, opts SSHServerOpts) *gossh.Client {
+func newSSHClient(t *testing.T) *gossh.Client {
 	t.Helper()
 	_, key, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
@@ -26,18 +26,18 @@ func newSSHClient(t *testing.T, opts SSHServerOpts) *gossh.Client {
 	if err != nil {
 		t.Fatal(err)
 	}
-	opts.AllowedUsers = []string{"runner"}
-	opts.AuthorizedKeys = map[string]string{
-		string(gossh.MarshalAuthorizedKey(signer.PublicKey())): "test",
+	shell := []string{"/bin/sh"}
+	if runtime.GOOS == "windows" {
+		shell = []string{os.Getenv("COMSPEC")}
 	}
-	if len(opts.Shell) == 0 {
-		opts.Shell = []string{"/bin/sh"}
-		if runtime.GOOS == "windows" {
-			opts.Shell = []string{os.Getenv("COMSPEC")}
-		}
-	}
-	opts.Env = append(os.Environ(), opts.Env...)
-	server, err := MakeServer(context.Background(), opts)
+	server, err := MakeServer(context.Background(), SSHServerOpts{
+		AllowedUsers: []string{"runner"},
+		AuthorizedKeys: map[string]string{
+			string(gossh.MarshalAuthorizedKey(signer.PublicKey())): "test",
+		},
+		Env:   os.Environ(),
+		Shell: shell,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,7 +62,7 @@ func newSSHClient(t *testing.T, opts SSHServerOpts) *gossh.Client {
 }
 
 func TestExecCompletesWithOpenStdin(t *testing.T) {
-	client := newSSHClient(t, SSHServerOpts{})
+	client := newSSHClient(t)
 	session, err := client.NewSession()
 	if err != nil {
 		t.Fatal(err)
@@ -101,7 +101,7 @@ func TestExecCompletesWithOpenStdin(t *testing.T) {
 }
 
 func TestExecReceivesStdinEOF(t *testing.T) {
-	client := newSSHClient(t, SSHServerOpts{})
+	client := newSSHClient(t)
 	session, err := client.NewSession()
 	if err != nil {
 		t.Fatal(err)
